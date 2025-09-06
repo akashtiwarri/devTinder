@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require("validator")
 
 const userSchema = new mongoose.Schema({
     firstName : {
@@ -14,7 +15,12 @@ const userSchema = new mongoose.Schema({
         required : true,
         unique : true,
         lowercase : true,
-        trim : true
+        trim : true,
+        validate(value){
+            if(!validator.isEmail(value)) {
+                throw new Error("Invalid email: " + value)
+            }
+        }
     }, 
     password : {
         type : String,
@@ -33,7 +39,12 @@ const userSchema = new mongoose.Schema({
     }, 
     photoUrl : {
         type : String,
-        default : 'https://inovineconferences.com/uploads/dummy-user.png'
+        default : 'https://inovineconferences.com/uploads/dummy-user.png',
+        validate(value){
+            if(!validator.isURL(value)){
+                throw new Error("Url format is not valid: " + value)
+            }
+        }
     }, 
     about : {
         type : String,
