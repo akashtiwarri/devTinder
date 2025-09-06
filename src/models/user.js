@@ -2,23 +2,48 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
     firstName : {
-        type : String
+        type : String,
+        required : true,
     }, 
     lastName : {
-        type : String
+        type : String,
+        required : true,
     }, 
     emailId : {
-        type : String
+        type : String,
+        required : true,
+        unique : true,
+        lowercase : true,
+        trim : true
     }, 
     password : {
-        type : String
+        type : String,
+        required : true,
     }, 
     age : {
         type : String
     }, 
     gender : {
-        type : String
+        type : String,
+        validate(value){
+            if(!["male", "female", "others"].includes(value)){
+                throw new Error('Gender data is not value')
+            }
+        }
     }, 
+    photoUrl : {
+        type : String,
+        default : 'https://inovineconferences.com/uploads/dummy-user.png'
+    }, 
+    about : {
+        type : String,
+        default : 'This is default value of the user!'
+    }, 
+    skills : {
+        type : [String]
+    }, 
+}, {
+    timestamps : true
 })
 
 const userModal = mongoose.model('User', userSchema); // ('name of modal', 'schema itself')
