@@ -2,13 +2,16 @@ const express = require('express');
 const app = express();
 const connectDb = require('./config/database');
 const User = require('./models/user');
+const { ValidateSignupData } = require("./utils/validation")
+const bcypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
+const userAuth = require('./middlewares/auth')
+app.use(cookieParser())
 app.use(express.json());
-const {ValidateSignupData} = require("./utils/validation")
-const bcypt = require('bcrypt')
 
 app.post('/signup', async (req, res) => {
     try {
-        
+
         // validation of data 
         ValidateSignupData(req);
 
@@ -21,7 +24,7 @@ app.post('/signup', async (req, res) => {
             firstName,
             lastName,
             emailId,
-            password : passwordHash
+            password: passwordHash
         });
         await user.save();
         res.send('User added successfully!!')
@@ -33,15 +36,19 @@ app.post('/signup', async (req, res) => {
 app.post('/login', async (req, res) => {
     try {
         const { emailId, password } = req.body;
-        const user = await User.findOne( { emailId : emailId } );
-        if(!user){
+        const user = await User.findOne({ emailId: emailId });
+        if (!user) {
             throw new Error("Invalid credentials!!")
         }
+        const isPasswordValid = await user.validatePassword(password);
+        if (isPasswordValid) {
+            // Create JWT token
+            const token = await user.getJWT(req);
 
-        const isPasswordValid = await bcypt.compare(password, user.password);
-        if(isPasswordValid){
+            // Add the token to cookie and send the response back to the server
+            res.cookie("token", token);
             res.send("Login Successfull!!")
-        }else {
+        } else {
             throw new Error("Invalid credentials!! ")
         }
     }
@@ -52,7 +59,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/feed', async (req, res) => {
 
-    try{
+    try {
         const allUsers = await User.find({});
         res.send(allUsers);
     }
@@ -63,8 +70,8 @@ app.get('/feed', async (req, res) => {
 
 app.delete('/user', async (req, res) => {
     const userId = req.body.userId;
-    
-    try{
+
+    try {
         const getUserId = await User.findByIdAndDelete(userId);
         res.send('User deleted successfully!!');
     }
@@ -76,17 +83,17 @@ app.delete('/user', async (req, res) => {
 app.patch('/user/:userId', async (req, res) => {
     const userId = req.params?.userId;
     const data = req.body
-    try{
+    try {
         const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills"];
         const isUpdateAllowed = Object.keys(data).every((k) => ALLOWED_UPDATES.includes(k));
-        if(!isUpdateAllowed){
+        if (!isUpdateAllowed) {
             throw new Error('Update not allowed');
         }
-        if(data.skills.length > 10){
+        if (data.skills.length > 10) {
             throw new Error('Skills can not be more then 10')
         }
-        const getUserId = await User.findByIdAndUpdate({_id : userId}, data, {
-            runValidators : true,
+        const getUserId = await User.findByIdAndUpdate({ _id: userId }, data, {
+            runValidators: true,
         });
         res.send('User updated successfully!!');
     }
@@ -95,13 +102,24 @@ app.patch('/user/:userId', async (req, res) => {
     }
 })
 
+app.get('/profile', userAuth, async (req, res) => {
+    try {
+        // The user object is now available on req.user thanks to the middleware
+        const user = req.user;
+
+        res.send(user);
+    } catch (err) {
+        res.status(400).send('ERROR : ' + err.message);
+    }
+});
+
 app.get('/user', async (req, res) => {
     const userEmail = req.body.emailId;
     try {
         const users = await User.find({ emailId: userEmail });
-        if(users.length === 0){
+        if (users.length === 0) {
             res.status(404).send('User not found!!')
-        }else {
+        } else {
             res.send(users)
         }
     }
@@ -109,6 +127,14 @@ app.get('/user', async (req, res) => {
         console.log('Something went wrong!!')
     }
 
+})
+
+app.post('/sendConnectionRequest', userAuth, async (req, res)=> {
+
+
+    const user = req.user;
+
+    res.send('Coonected by !!' + ' ' + user.firstName)
 })
 
 connectDb().then(() => {
