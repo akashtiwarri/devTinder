@@ -1,7 +1,7 @@
 const express = require('express');
 const { ValidateSignupData } = require('../utils/validation');
 const User = require('../models/user')
-const bcypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 
 const authRouter = express.Router();
 
@@ -14,7 +14,7 @@ authRouter.post('/signup', async (req, res) => {
         const { firstName, lastName, emailId, password } = req.body;
 
         //Encrypt the password
-        const passwordHash = await bcypt.hash(password, 10);
+       const passwordHash = await bcrypt.hash(password, 10);
         // Creating a new instance of the User Model
         const user = new User({
             firstName,
