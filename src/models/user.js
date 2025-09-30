@@ -64,7 +64,7 @@ userSchema.methods.getJWT = async function() {
     const user = this;
 
     // Use jwt.sign() to create a new token with the user's ID
-    const token = jwt.sign({ _id: user._id.toString() }, "DEV@Tinder$13sss11", { expiresIn: '1d' });
+    const token = jwt.sign({ _id: user._id.toString() }, "DEV@Tinder$1311", { expiresIn: '1d' });
 
     return token;
 }

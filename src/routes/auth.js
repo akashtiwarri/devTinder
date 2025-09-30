@@ -7,14 +7,10 @@ const authRouter = express.Router();
 
 authRouter.post('/signup', async (req, res) => {
     try {
-
-        // validation of data 
         ValidateSignupData(req);
-
         const { firstName, lastName, emailId, password } = req.body;
-
         //Encrypt the password
-       const passwordHash = await bcrypt.hash(password, 10);
+        const passwordHash = await bcrypt.hash(password, 10);
         // Creating a new instance of the User Model
         const user = new User({
             firstName,
@@ -51,6 +47,13 @@ authRouter.post('/login', async (req, res) => {
     catch (err) {
         res.status(400).send('ERROR : ' + err)
     }
+})
+
+authRouter.get('/logout', async (req, res) => {
+    res.cookie("token", null, {
+        expires: new Date(Date.now())
+    });
+    req.send('Logout successfull');
 })
 
 
